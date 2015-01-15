@@ -1713,12 +1713,12 @@ sub reach_to_t {
 
 $main::functionmap{'sreach'}='&tools_sreach';
 sub tools_sreach {
-	local ($id, $mobcost, $tfactor, $newmob, $frange);
+	local ($id, $mobcost, $tfactor, $newmob, $frange,);
 
 	&build_ships_target($main::commandarg);
 	print "\n        --------------Ship Reach Report--------------\n";
-	print "                                             Fire   Nav range  Nav range\n";
-	print "Ship Type    x,y    Eff Tech  range    now      next update\n";
+	print "                                       Fire   Movement   Movement\n";
+	print "Ship  Type  Fleet    x,y    Eff  Tech  range    now      next upd\n";
 	foreach $id (keys %target) {
 		if ($target{$id}) {
 			$type=$ship{$id}{'type'};
@@ -1726,14 +1726,14 @@ sub tools_sreach {
 			$mobcost = 48000/(($ship{$type}{'spd'} + $ship{$type}{'spd'}*$tfactor)*$ship{$id}{'eff'});
 			$newmob = $ship{$id}{'mob'} + $ship{'max_mob'};
 			$newmob = 127 if $newmob > 127;
-			$frange = $ship{$id}{'eff'}>59?($world{'firerangefactor'}*$ship{type}{'frg'}*$tfactor/2):0;
+			$frange = $ship{$id}{'eff'}>59?($world{'firerangefactor'}*$ship{$type}{'rng'}*$tfactor/2):0;
 			if ($frange) {
 				$frange = sprintf("%3.2f", $frange);
 			} else {
 				$frange = "";
 			}
-			printf "%-4d %4s %4d,%-4d %3d%% %3d  %6s    %3d         %3d\n",
-			$id,$type,$ship{$id}{'x'},$ship{'y'},$ship{$id}{'eff'},$ship{$id}{'tech'},
+			printf "%4d  %4s    %1s   %4d,%-4d %3d%%  %3d %6s   %3d         %3d\n",
+			$id,$type,$ship{$id}{'flt'},$ship{$id}{'x'},$ship{$id}{'y'},$ship{$id}{'eff'},$ship{$id}{'tech'},
 			$frange,
 			$ship{$id}{'mob'}>0?int($ship{$id}{'mob'}/$mobcost+0.999):0,
 			int($newmob/$mobcost+0.999);
@@ -1747,24 +1747,24 @@ sub tools_lreach {
 
 	&build_lands_target($main::commandarg);
 	print "\n        --------------Land Unit Reach Report--------------\n";
-	print "                                             Fire   Mar range  Mar range\n";
-	print "Unit Type                     x,y  Eff Tech  range    now      next update\n";
-	foreach $id (keys %unittech) {
+	print "                                       Fire   Movement   Movement\n";
+	print "Unit  Type  Army     x,y    Eff  Tech  range    now      next upd\n";
+	foreach $id (keys %target) {
 		if ($target{$id}) {
-			$tfactor = (50 + $unittech{$id})/(200 + $unittech{$id});
-			$mobcost = 48000/(($unitspd{$land{$id}{'name'}} + $unitspd{$land{$id}{'name'}}*$tfactor)*$land{$id}{'eff'});
-			$newmob = $unitmob{$id} + $unitmob;
+			$tfactor = (50 + $land{$id}{'tech'})/(200 + $land{$id}{'tech'});
+			$mobcost = 48000/(($land{$id}{'spd'} + $land{$id}{'spd'}*$tfactor)*$land{$id}{'eff'});
+			$newmob = $land{$id}{'mob'} + $land{'max_gain'};
 			$newmob = 127 if $newmob > 127;
-			$frange = $land{$id}{'eff'}>59?($firerangefactor*$unitfrg{$land{$id}{'name'}}*$tfactor):0;
+			$frange = $land{$id}{'eff'}>59?($world{'firerangefactor'}*$land{$id}{'frg'}*$tfactor/2):0;
 			if ($frange) {
 				$frange = sprintf("%3.2f", $frange);
 			} else {
 				$frange = "";
 			}
-			printf "%-4d %-20s %7s %3d%% %3d  %6s    %3d         %3d\n",
-			$id,$land{$id}{'name'},$unitsect{$id},$land{$id}{'eff'},$unittech{$id},
+			printf "%4d  %4s    %1s   %4d,%-4d %3d%%  %3d %6s   %3d         %3d\n",
+			$id,$land{$id}{'type'},$land{$id}{'army'},$land{$id}{'x'},$land{$id}{'y'},$land{$id}{'eff'},$land{$id}{'tech'},
 			$frange,
-			$unitmob{$id}>0?int($unitmob{$id}/$mobcost+0.999):0,
+			$land{$id}{'mob'}>0?int($land{$id}{'mob'}/$mobcost+0.999):0,
 			int($newmob/$mobcost+0.999);
 		}
 	}
@@ -2847,12 +2847,15 @@ sub build_lands_target {
 	%target = ();
 
 	$lands = '*' unless $lands;
-	print STDERR "parsing land $lands...";
-	print $main::S "land $lands\n";
-	$main::command = 'land';
+	print STDERR "parsing ldump $lands...";
+	print $main::S "ldump $lands\n";
+	$main::command = 'ldump';
 	while (&getline) {
-		($id) = split(/\s/,$_,2);
-		$target{$id} = 1 unless /^\d+ units?$/;
+		next if (split(/\s+/, $_)<40);		# minimum elemetns in sdump output
+		if (/^\s*(\d+)/) {
+			($id)=$1;
+			$target{$id} = 1;
+		}
 	}
 	print STDERR "done\n";
 }
