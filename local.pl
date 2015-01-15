@@ -108,19 +108,15 @@ sub games {
   printf "%8s %-14s %-10s %20s %6s %-14s\n", "name", "country", "password",
   "host", "port", "directory";
   print "-----------------------------------------------------------------------------\n";
-  for (sort keys %games) {
-    split(/\s+/, $games{$_}); # values of %games are separated by whitespace
-    $dir = eval(''.&quotify(@_[4]));
+  for $g (sort keys %games) {
+    my($c, $r, $h, $p, $d) = split(/\s+/, $games{$g}); # values of %games are separated by whitespace
+    $dir = eval(''.&quotify($d));
     $dir =~ s/^$ENV{'HOME'}/~/; # replace home directory with ~
     if (length($dir) > 14) {
       $dir = "..." . substr($dir,-11);
     }
-    printf "%8s %-14s %-10s %20s %6s %-14s\n",$_,
-    @_[0],
-    @_[1],
-    eval(''.&quotify(@_[2])),
-    eval(''.&quotify(@_[3])),
-    $dir;
+    printf "%8s %-14s %-10s %20s %6s %-14s\n",$g,
+    $c, $r, eval(''.&quotify($h)), eval(''.&quotify($p)), $dir;
   }
 }
 

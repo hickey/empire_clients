@@ -1,4 +1,4 @@
-#!/usr/local/bin/perl
+#!/usr/bin/env perl
 # $country        = '7';
 # $representative = '7';
 # $host           = 'random.chem.psu.edu';
@@ -941,18 +941,15 @@ sub set_game {
   local ($dir);
   
   return unless $games{$game};
-  split(/\s+/, $games{$game});	# the five fields are separated by a whitespace
-  $country        = @_[0];
-  $representative = @_[1];
-  $host           = @_[2];
-  $port           = @_[3];
+  ($country,$representative,$host,$port,$dir) = split(/\s+/, $games{$game});	# the five fields are separated by a whitespace
+
   if ($port !~ /^\d+$/) {
     print STDERR "Error: Port is \"$port\" for game \"$game\", but it should be a number.\n";
     &close_connection;
     return;
   }
   # Change to the game's directory
-  $dir = eval(''.&quotify(@_[4]));
+  $dir = eval(''.&quotify($dir));
   $dir =~ s/~/$ENV{'HOME'}/g;
   if (!chdir($dir)) {
     print STDERR "Cannot change directory to: \"".eval(''.&quotify(@_[4]))."\"\n";
