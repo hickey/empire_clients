@@ -46,6 +46,8 @@
  *******************************************************/
 
 #include <stdio.h>
+#include <curses.h>
+#include <term.h>
 
 static char *Terminal_SO, *Terminal_SE;
 
@@ -102,7 +104,7 @@ hiprint(str)
   putchar('\n');
 }
 
-void main(argc, argv)
+int main(argc, argv)
 int argc;
 char *argv[];
 {
@@ -112,13 +114,13 @@ char *argv[];
 
   if (argc > 1) {
     while (!feof(stdin)) {
-      if (gets(buf)) {
+      if (fgets(buf, sizeof(buf), stdin)) {
 	stripprint(buf);
       }
     }
   } else {
     while (!feof(stdin)) {
-      if (gets(buf)) {
+      if (fgets(buf, sizeof(buf), stdin)) {
 	hiprint(buf);
       }
     }

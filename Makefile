@@ -2,9 +2,9 @@
 #
 
 # On most systems, this should work:
-LIBS = -ltermcap
+# LIBS = -ltermcap
 # On some systems, you may need to use this instead:
-# LIBS = -lcurses
+LIBS = -lcurses
 
 highlight: highlight.c
 	$(CC) $(CFLAGS) -o $@ highlight.c $(LIBS)
