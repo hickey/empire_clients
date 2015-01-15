@@ -1,0 +1,28 @@
+  These commands are local commands which may be typed at the local prompt
+  or at the pei prompt:
+    help [subject]          - Print help on [subject].
+    addgame [game] [country] [password] [host] [port] [directory]
+                            - Add [game] to pei where [directory] is a unix
+			      directory that pei cd's to before connecting
+                              to the game.
+    games                   - List games.
+    [game]                  - Connect to [game].
+    try [game]              - Connect to [game] as a different country.
+    kill [game]             - Kill process [game] on host.
+    trykill [game]          - Kill process [game] on host with a different
+                              country.
+    echo [text]             - Print [text] to the terminal.
+    alias [name] [stuff]    - Define [name] to mean [stuff] (see "Aliases"
+                              below).
+    unalias [name]          - Remove alias definition for [name].
+    terse                   - Toggle terse mode.  If terse is on, then tools
+                              run quietly (useful for modems with low BAUD).
+    quiet                   - Toggle quiet mode.  If quiet is on, then commands
+                              read from exec files are not printed.
+    firewall [proxyhost] [proxyport] ["proxyprompt"]
+                            - Use the proxy server to connect to the empire
+                              server. [proxyprompt] is the prompt from the
+                              server telling pei its ready to accept an address.
+                              proxyprompt should be in double quotes.
+    exit                    - Exit pei.
+    bye                     - Exit pei.

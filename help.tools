@@ -1,0 +1,155 @@
+These commands are "tool commands" and may be typed at the pei prompt when
+you are conencted to a game.  Note that if <SECTS>, <SHIPS>, or <UNITS> are
+not specified in any of the tools, then '*' is used.  Default <REALM> is '#'.
+Note also that ?switches may always be used in <SECTS> specifications.
+  These tools change your country:
+    nova <REALM> - Auto-explore all adjacent wilderness sectors in <REALM>.
+                    If <REALM> is not specified, #0 is used.
+                    e.g. nova #1
+    cmvr <SECTS> <THRESH>
+                  - Move civs in <SECTS> to try to get <THRESH> in each
+                    sector.  If <THRESH> is not specified, then the value of 
+                    "max safe civs" from the nation report is used.
+                    e.g. cmvr
+                    e.g. cmvr #3
+                    e.g. cmvr #12 ?newd=g 300
+    umvr <SECTS> <THRESH> - Move uws (just like cmvr).
+    imvr <SECTS>, dmvr <SECTS>, lmvr <SECTS>, smvr <SECTS>, ...
+                  - Move iron, dust... in <SECTS> according to dist thresholds.
+    NOTE: The above tools will never lower the mobility of a sector below the
+    value specified in the $minmob array.  If you don't like the default values
+    for $minmob, then edit $minmob in the xmvr_init function of tools.pl.
+    setfood <SECTS> [number of updates]
+                  - Set food thresholds for maximum civ growth.  (setfood will
+                    not reduce any existing thresholds.)  After calling
+                    "setfood", you can call "fmvr" to move food into the
+                    sectors that need it.  Won't set thresholds in warehouses.
+		    if [number of updates] is specified, then pei will
+		    set the food threshold for that many updates (assuming
+		    unlimited civ growth).  Default [number of updates] is 2.
+    jack <SECTS>  - Set iron thresholds in your "j" and "k" sectors to the
+                    value of "max1" in your production report.  After calling
+                    "jack", you can call "imvr" to move iron into the sectors
+                    that nead it.
+    fus <SHIPS>   - Fuel ships in harbours and generate an error message if
+                    the harbour needs more fuel.  If the ship is at sea, and
+                    it is not completely fueled, then the number of sectors
+                    it will be able to sail before needing to refuel is shown.
+    router <SECTS> 
+                  - Dist all sectors to the nearest warehouse.  If there isn't
+                    a warehouse within 10 sectors, make a useless sector into
+                    a warehouse and dist to it.
+    foreach <SECTS> [ecommand]
+                  - Perform the Empire command [ecommand] on <SECTS>
+                    where instances of the variables $sect, $civ,
+                    $mil, $uw, $food, $iron, $lcm, $hcm, $iron, $dust,
+                    $bar, $oil, $rad, $pet, $shell, and $gun in
+                    [ecommand] will be replaced by their values for
+                    each sector.
+                    e.g. foreach #1 ?mil<5 move m 0,0 5-$mil $sect
+                    (Make sure that each sector in #1 has at least 5 mil
+                    in it--if it doesn't, move the necessary amount of mil
+                    from 0,0 into the sector.)
+  These tools tell you information about your country:
+    civs <SECTS>  - Produces a report showing which sectors have too many
+                    civs, and which sectors have too few (based on how
+                    many commodities are in the sector and what the neweff
+                    will be).
+    rebel <SECTS> - Tells you how many more mil conquered sectors need
+                    to keep them from rebelling.
+    crew <SHIPS>  - This command specifies exactly how many civs or mil your
+                    ships will need so that they won't decay when they are out
+		    at sea.
+    reach         - Tells you the range of your forts, radar stations, and 
+                    coastwatch.
+    sreach <SHIPS>
+                  - Tells you the fire range of your ships, and how many
+                    sectors they can nav this update and next update.
+    lreach <UNITS>
+                  - Tells you the fire range of your land units, and how many
+                    100% (non-road non-mountain) sectors they can march this
+                    update and next update.
+    sneweff <SECTS>
+    pneweff <SECTS>
+    lneweff <SECTS>
+                  - Calculates the new efficiency that ships, planes,
+                    or land units will have after the next update.  If
+                    the sector doesn't have enough commodities to
+                    build all the units, then the extra commodities
+                    needed will show up in brackets in the
+                    commodities' column.  The avail column will show
+                    the ammount of avail that this ship, plane, or
+                    unit will use.  If the value in the avail column
+                    is in brackets it indicates the ammount of avail
+                    that this ship, plane, or unit needs for maximum
+                    production.  Lastly, if a ship needs more mil on
+                    board to prevent efficiency decay, that will
+                    appear in brackets in the "Crew" column.  The "total"
+                    at the bottom sums the total commodities consumed in the
+                    sector for building.  Any extra commodities in the sector
+                    (i.e. not being used for building) will be preceded by a +.
+                    e.g. sneweff #1
+                    e.g. pneweff 11,11
+    delta <SECTS>
+    fdelta <SECTS>
+    wdelta <SECTS>
+                  - These three commands calculate production deltas in 
+                    different ways.  The <SECTS> argument refers to
+                    distribution centres.  So only sectors which distribute
+                    into <SECTS> are included in the calculations.  So a sector
+                    in <SECTS> which distributes outside <SECTS> will not
+                    be included, while a sector outside <SECTS> which
+                    distributes into <SECTS> will be included.
+                  - "delta" adds up the total amount of commodities produced
+                    and subtracts that from the total amount consumed.  The
+                    "supply" column says how many updates of supply you have
+                    left of that commodity.
+                  - "fdelta" projects civ/uw growth versus food production
+                    over the next 15 updates.
+                  - "wdelta" is like "delta" except that it bases its
+                    calculation on what will happen inside the warehouses.
+                    i.e. how much of each commoditiy is going into storage
+                    versus how much is being drawn out of storage.
+    simu <SECTS>  - "simulate" an update.  Pei runs your country through a 
+                    simulated update, showing how many of your commodities
+                    will get distributed where at the update.  The update is
+                    always simulated for *all* the sectors in your country.
+                    The <SECTS> argument specifies which sectors you'd like
+                    displayed.  The "mob" field specified how much mobility
+                    will be left in the sector after stuff is distributed out
+                    but before new mobility is added.  The "commodities" field
+                    shows which commodities will end up in which sectors.  A
+                    "+" after a commodity means that not all of that commodity
+                    got disted out.  A "-" means that the sector didn't get all
+                    that it wanted.  An "a" in the "make" field refers to how
+                    much avail will be created in that sector.
+    cmap <REALM>  - Like bmap, but prints a letter representing the owner of
+                    sectors not owned by you, so you can see who is where.
+    nmap <REALM>  - Like cmap, but uses your new sector designations,
+                    so you can see what your country is going to look like.
+    stat <SECTS> (?switches)
+                  - Report known information on all sectors in <SECTS>
+                    that statisfy ?switches (if defined).  All normal
+                    sector switches apply although if you do not know
+                    the information about the sector in question the
+                    check will probably fail.
+                    e.g. stat * ?own=27
+    sstat <REALM> (?switches)
+    pstat <REALM> (?switches)
+    lstat <REALM> (?switches)
+                  - Report known information on all land units, planes,
+                    or ships within <REALM> that satisfy ?switches (if
+                    definded).  Valid switches for land units are:
+                    own, tech, eff, and type.  The only difference
+                    between these switches and normal empire switches
+                    are that type will handle a partial match.
+                    e.g. lstat * ?own=27&type=inf
+    mail, wmail   - mail-like interface for reading telegrams and
+                    announcements.  Allows replying, forwarding, and saving
+                    to a file.  To reply to an announcement as an announcement,
+                    forward without a country number.  Type "?" in the mailer
+                    for help.
+    tele, anno    - Use the editor specified in the $EDITOR variable to compose
+                    a telegram or announcement.  When you have finished editing
+                    your tele or anno, pei will chop it into 1024 byte blocks
+                    and send it off.

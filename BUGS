@@ -1,0 +1,37 @@
+$Id: BUGS,v 2.3 1995/07/08 11:02:14 children Beta $
+
+        --- Known bugs in pei ---
+
+This should no longer be an issue with the move to perl5.  If you are still
+having problems send me mail.
+#	"Protocol not supported"
+#		If you see this message, edit sock.pl and change
+#			sub SOCK_STREAM       { 1; }
+#		to
+#			sub SOCK_STREAM       { 2; }
+
+"Command not found"
+  If you get "Command not found" when you type "pei", try typing "perl pei"
+or "./pei".
+
+XRIX (IRIX?)
+  simu.pl doesn't load (perl doesn't like the sort syntax).  Solution:
+  remove the lines:
+          eval("package $game; do 'simu.pl';");
+          &nofind_error("simu.pl",$@) if !$simu_loaded;
+  from the file called "pei" and try again.
+
+SunOS
+  Sometimes perl (for example in SunOS) is unable to find the files
+  tools.pl, parse.pl, ...
+  In this case, put all the *.pl files in a directory called ~/perl and
+  then in your ~/.login file put the line:
+  setenv PERLLIB ~/perl
+
+"router"
+  Router doesn't seem to behave as it should.  For example, if you
+  have two warehouses on the same island, and half of the sectors dist
+  to one warehouse, and half to the other, then "router" will apparently
+  switch which warehouse the sectors dist to.  Very strange (I'll have
+  to see it to believe it!).  Hopefully (but unlikely) I'll have time to
+  test it on a blitz sometime.

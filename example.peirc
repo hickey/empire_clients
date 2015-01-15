@@ -1,0 +1,79 @@
+# $Id: example.peirc,v 2.9.3.1 1997/06/08 20:09:50 root Exp root $
+# Do NOT copy this file to ~/.peirc.  First run pei and let it convert your
+# ~/.eifrc into ~/.peirc.  Then after it has done that, you might want to
+# add some of these aliases to your ~/.peirc.
+
+# Use the "highlight" program to highlight the output of the sect command:
+alias sect "sect $+ | $PEIPATH/highlight"
+
+# Build a bridge and explore onto it:
+alias bb "build b $1 ; ?$2 ; expl c $1 1 ${2}h"
+
+# Set thresholds:
+alias thom "th o * ?newd=o 1; th i * ?newd=m 1; th d * ?newd=g 1; th l * ?newd=j 1; th h * ?newd=k 1; th s * ?newd=i 1; th g * ?newd=d 1; th p * ?newd=% 1; th r * ?newd=u 1"
+
+# After using cmvr, I use these two aliases:
+alias rs "res * ?newd=+&civ>40"
+alias ds "des * ?newd=+&civ>40&ocon>10 o; des * ?newd=+&civ>40&gold>10 g; thom" 
+# Check oil and dust:
+alias cod "res * ?des=o&ocon<10; res * ?des=g&gold<10"
+
+# Convert civs:
+alias convv "conv * ?own#oldown&uw<999 40; shoot c * ?own#oldown 999; cen * ?old#own&mob>0"
+
+# fire
+alias fi "fire sect $1 $2"
+alias fl "fire land $1 $2"
+alias fs "fire ship $1 $2"
+
+# machine-gun fire
+alias mfi "fi $1 $2 ; fi $1 $2 ; fi $1 $2 ; fi $1 $2 ; fi $1 $2 ; fi $1 $2 ; fi $1 $2 ; fi $1 $2 "
+alias mfl "fl $1 $2 ; fl $1 $2 ; fl $1 $2 ; fl $1 $2 ; fl $1 $2 ; fl $1 $2 ; fl $1 $2 ; fl $1 $2 "
+alias mfs "fs $1 $2 ; fs $1 $2 ; fs $1 $2 ; fs $1 $2 ; fs $1 $2 ; fs $1 $2 ; fs $1 $2 ; fs $1 $2 "
+
+# Pipe info pages to more:
+alias info "info $1 | more"
+
+# Production of interesting sectors:
+alias pr "prod * ?newd#m&newd#g&newd#o&newd#a&newd#+"
+
+# Move commodities out of sectors they shouldn't be in:
+alias thod "th i * ?iron>1&newd#j&newd#k&newd#w 1; th o * ?oil>1&newd#%&newd#d&newd#t&newd#r&newd#w 1; th d * ?dust>1&newd#b&newd#t&newd#r&newd#w 1; th l * ?lcm>1&newd#h&newd#*&newd#!&newd#t&newd#r&newd#i&newd#d&newd#l&newd#p&newd#w 1; th h * ?hcm>1&newd#h&newd#*&newd#!&newd#i&newd#d&newd#w 1; th b * ?bar>1&newd#b&newd#w 1; th d * ?newd=b&bar=999 1"
+
+# common commands
+alias m "map #"
+alias h history
+alias x "exit"
+alias q "quit"
+
+# If you use X-windows, you can put the output of a command in it's
+# own window by using:
+alias xs "$+ | cat | (xmessage -t 'PeiShow: $+' & )"
+
+# typo's
+alias udpate update
+alias reda read
+alias mvoe move
+alias mvo move
+alias shiip ship
+alias cdn cen
+alias elnist enlist
+
+# directories
+$HOWDIR = "~/empire/how"
+
+# hosts
+$ENET = "empire.net"
+
+# blitzes
+addgame vhow visitor visitor $ENET 7778 ${HOWDIR}
+addgame how1 1 1 $ENET 7778 ${HOWDIR}
+addgame how2 2 2 $ENET 7778 ${HOWDIR}
+addgame how3 3 3 $ENET 7778 ${HOWDIR}
+addgame how4 4 4 $ENET 7778 ${HOWDIR}
+addgame how5 5 5 $ENET 7778 ${HOWDIR}
+addgame how6 6 6 $ENET 7778 ${HOWDIR}
+addgame how7 7 7 $ENET 7778 ${HOWDIR}
+addgame how8 8 8 $ENET 7778 ${HOWDIR}
+addgame how9 9 9 $ENET 7778 ${HOWDIR}
+addgame how10 10 10 $ENET 7778 ${HOWDIR}

@@ -1,0 +1,17 @@
+		Welcome to pei - Perl Empire Interface
+
+                *** THIS IS A BETA RELEASE ***
+                ***  USE AT YOUR OWN RISK  ***
+
+If you have never used pei before, then you should find out how to
+install pei and run it by reading the file called "INSTALL".
+
+The major changes in the upgrade from 2.8 to 2.9 are:
+* pei now requires perl 5 (check your perl version with perl -v)
+
+* pei is now fully compliant with the 'wolfpack' code.  Which of course
+  broke all compliance with previous server versions.  It appears that noone
+  is running pre-wolfpack games though.
+
+You can get the lastest information and version of PEI from the PEI homepage
+at http://www.nol.org/home/tetherow/pei

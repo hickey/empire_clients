@@ -1,0 +1,14 @@
+$Id: WISH_LIST,v 2.9.3.1 1997/06/08 20:09:50 root Exp root $
+        --- PEI WISH LIST ---
+
+  These are things which we hope to add to pei in the future:
+
+  Update in progress
+    Check for "Update in progress" message in robot tools.  (Mainly
+    useful for blitzing.)
+
+  Rewrite of entire client to move to a 'packagable' structure which will
+  facilitate the writing of modules for different capabilites.  Most notably
+  a TK module or a curses module for client interface.  This could also be
+  used to group tools into 'logical' blocks and then you would only need to
+  include the tools you use.

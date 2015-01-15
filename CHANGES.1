@@ -1,0 +1,473 @@
+$Id: CHANGES.1,v 2.9.3.1 1997/06/08 20:09:50 root Exp root $
+
+        --- PEI 1.x CHANGES  ---
+
+This file records what changes were made with each version upgrade.
+
+1.0 -> 1.0.1     28 Jun 94   Ken Stevens
+  Rewrote eval { } and x77 so that it will work under older versions of perl.
+  Added a 'bye' command.
+  Moved stuff users don't need to know out of pei.man and into hacker.man.
+  Fixed readline.pl so that it should now work on all systems.
+  Fixed local prompt so that it now works without readline.pl.
+  Fixed interrupt handler for the local prompt.
+
+1.0.1 -> 1.0.2   29 Jun 94   Ken Stevens
+  Fixed a bug in 'addgame' and 'games' which removed dots from hostnames.
+  Changed addgame to allow any number of whitespace characters to separate
+    fields (rather than insisting on space separated fields).
+
+1.0.2 -> 1.0.3   30 Jun 94   Ken Stevens
+  Fixed a serious bug in buildcost which caused router and cmvr to
+    not work correctly.
+  Fixed router.
+  Fixed cmvr <THRESH> and umvr <THRESH> to use the <THRESH> argument.
+  Fixed nova <SECTS> to use the <SECTS> argument.
+
+1.0.3 -> 1.0.4   27 Jul 94   Ken Stevens
+  Fixed a bug which resulted in the subroutine &main'ECONNREFUSED sometimes
+    being undefined.  It is now guaranteed to be defined.
+  Fixed a bug which broke the ?scommand syntax--you can now safely use
+    ?scommand syntax in your aliases.
+  Fixed a bug which translated:
+      alias sct "dump ${1:-#} ${2:+junk} | psect | more"
+    incorrectly (when translating from .eifrc to .peirc).
+  Fixed a bug in readline !history mechanism (if you typed <CR> at a sub-prompt
+    then the empire command was not being put on the history list--now fixed).
+  Added $AUTOGAME capability.
+  Added support for environment variables EMPIRECOUNTRY, EMPIREREP, EMPIREHOST,
+    and EMPIREPORT.
+  Now permit ~/dir syntax for directories in "addgame" command.
+  Can now just type "pei gamename" at the unix prompt.
+  Added new local command: "terse" which toggles whether tools have
+    long or short output (useful for people with 1200 or 2400 baud modems).
+  Added new local command "quiet" to toggle the value of $quiet.
+  Improved xmvr algorithm to make it much faster (once a sector has spent
+    all its mob, it now is deleted from the @rich array speeding things
+    up considerably).
+  Fixed the spelling of "interrupt" in all files.
+  Added four interrupt handlers: one for each tool.
+  Made a new file "BUGS".
+
+1.0.4 -> 1.0.5   27 Jul 94   Ken Stevens
+  Fixed a bug which threw pei into an infinite loop when ^C was hit
+    during an attack.
+  Improved interrupt handler diagnostics.
+
+1.0.5 -> 1.1.0   11 Aug 94   Sam Tetherow
+  tools.pl:
+    Added three new tools: "sneweff", "pneweff", and "lneweff" which
+      calculate the new efficiency ships, planes, and land units will
+      have after the update (based on commodities and avail).
+    Added two new tools: "tele" and "anno" which let you use an
+      editor to compose your telegrams and announcements, and then
+      pei chops it into 1024 byte blocks and sends it off for you.
+    Added two new tools: "mail" and "wmail" which are mail-like
+      interfaces for reading your telegrams and announcements with reply,
+      forward, and save capabilities (telegrams and announcements are saved
+      in separate files in the users game directory, with messages marked
+      as "read" or "unread").
+    Added a "foreach" tool which allows you to perform an Empire command on a
+      specified group of sectors.
+    Rewrote find_country_number to use nation vs relation 1, relation 2, 
+      and country *.
+
+  pei:
+    &find_country_number and &tools_init now occur before the reading
+      of startup.exec.  It is no longer necessary to put $coun=X in
+      your startup.exec file.
+    eval(''.&quotify(...)) was removed from country name and
+      representative to allow users (like Drazz'zt) to have non-alphanumeric
+      characters in their country name and rep.  If $game is set from $country
+      and $country contains non-alphanumeric characters, as much of $country
+      as possible is used for the game name ($game must be alphanumeric
+      because it is used as a package name).
+
+  parse.pl:
+    Removed all occurances of %parse_vars and moved the info that was
+      in %parse_vars to comments at the top of parse.pl organised
+      according to sect, country, unit, etc.
+    Moved all calls to &add_parsemap to the top.
+    Rewrote &parse_map.
+    Fixed parsing for:
+      ships, units, planes, sonar, lookout, llookout, coastwatch, spy, report,
+      Bulletins, attack, relations, satellite, recon, mission query, build, map
+      resource, country,
+    Added functions &dump_info and &load_info which save and
+      load unowned sector and unit data (so that enemy intelligence
+      from spying, llook, etc... is saved over logging out and in
+      again).  The data is saved in a file called $game.dump.  This
+      functionality is currently not used.
+
+1.1.0 -> 1.1.1   13 Aug 94   Ken Stevens
+    Changed the name of README to INSTALL and made README now include
+      information that users of older versions of pei will want to know.
+    Moved "wish list" out of hacker.man and into a file called WISH_LIST.
+    Copied the tool manual into a file called tools.man.
+    I now run an integrity checking program which ensures that all
+      repeated documentation is identical.
+    Added "help tools" command.
+    Fixed a bug in history which caused !abc to not work sometimes.
+    Game names are now forced to be alphanumeric.
+    Removed &getline from pei and renamed &drazz_getline to &getline
+      in tools.pl.
+    Fixed "games" command so that country and rep are not
+      eval-quotify'd (since they aren't when they are specified).
+    Added user definable variable $EDITOR for specifying which editor
+      to use when composing telegrams.
+    Fixed a bug in tele which prevented you from having blank lines in
+      telegrams.  Also added "Sending telegram...done" diagnostics.
+    Changed pei so that now you can just put the *.pl files in the
+      same directory as pei (they don't have to be in ~/perl anymore).
+    Fixed the decimal formatting for xneweff functions.
+    Fixed interrupt handers for routines which read data from the server.
+    Added "rebel" command.
+
+1.1.1 -> 1.1.2   18 Aug 94   Ken Stevens
+   Completely rewrote all the mail/wmail stuff and put it in a new file
+      called mail.pl.
+   Now pei screams warnings at you if it can't find the tools it needs.
+   Sam fixed a couple of bugs related to avail calculation in pneweff
+      and lneweff.
+
+1.1.1 -> 1.1.3   20 Aug 94   Sam Tetherow
+    Fixed parse_produce.
+    Added realm parsing to parse_nation.
+    Added in_realm to tools.pl:
+      in_realm($realmstring, $sect) will return 1 if $sect is in $realmstring,
+      0 otherwise.  ($realmstring is of type x1:x2,y1:y2)
+    Added two new tools "delta" and "cdelta":
+
+1.1.3 -> 1.1.3a  11 Sep 94   Ken Stevens
+  pei:
+    The role of "startup.exec" has changed.  It no longer contains
+      commands sent to the server which are required by the tools.  These
+      commands are now automatically and silently run when the tools are
+      loaded.  The name of "startup.exec" has changed to "start.exec" and
+      should now only contain commands which the user wants to run when they
+      connect to the game (for example, maybe you want to display a map
+      and check for starvation everytime you logon, so you could put "map #"
+      and "starv *" in your start.exec file.
+  tools.pl:
+    Changed &find_country_number so that it can find your country
+      number in the old server, the new server, or a HIDDEN game.
+    Fixed interrupt handler for "nova" tool.
+    Stuff that used to be in "startup.exec" is now in &tools_init.
+  mail.pl:
+    Now keeps "You lost your capitol..." messages out of mail.
+  parse.pl:
+    Changed &parse_nation so that it can work with either the old or
+      the new server. 
+
+1.1.3a -> 1.2    12-15 Sep 94   Sam Tetherow
+  tools.pl
+    Added 7 new tools: stat, sstat, lstat, pstat, delta, wdelta, fdelta
+
+  parse.pl
+    Added parse_level
+    Added lcargo (in parse_cargo)
+    Added parse_power
+    Misc fixes to parse_prod and others.
+    Added &main'load_DB and &main'save_DB to load and store the internal DB.
+      (Called from pei.)
+  pei
+  Added call to &main'load_DB to occur immediately following the loading of
+   tools.pl and parse.pl
+  Added call to &main'save_DB to occur both in do_exit and shutdown.  I am not
+   sure if there are the best places to put them, but that is what it looked 
+   like to me.
+  Fixed ^C during wait
+
+                 13-15 Sep 94   Ken Stevens
+  readline.pl
+    Upgraded from version 930122.003 to version 930306.007 of readline.pl.
+  pei
+    Fixed the way readline.pl handles cursor movement (007 does it nicer)
+    Removed $, = ", " from pei because it conflicted with readline.pl
+    I moved &getline out of pei and into tools.pl and mail.pl.
+    You can now call pei with a "-n" flag which means "don't load
+      tools".  The idea here is to speed up the connection time if you just
+      want to login and check your mail in a game.
+    Changed load_DB and save_DB so that each game has its own copy and
+      save_DB is called for each connected game at shutdown time.
+  mail.pl
+    Fixed a bug in headers which wrote "30" for the subject of BULLETINS
+    Now if a message is >22 lines it will be piped to more.
+  tools.pl
+    Created a function &print_n_parse which prints a command to the
+      screen and then parses it.  It is used for the init commands.
+    The foreach tool has been changed so that anything appearing after the
+      sector specification is parsed as an input line rather than as
+      an empire command.  Thus it can now contain semicolons and aliases.
+1.2 -> 1.2.1   16 Sep 94 Ken & Sam
+  pei
+    Fixed a bug which caused pei to seg fault when shutting down.
+  tools.pl
+    Fixed a bug which miscalculated co-ordinate wrapping and screwed
+      up stat.
+  parse.pl
+    Fixed a bug in save_DB which separated first three fields by ','
+      by mistake.
+1.2.1 -> 1.2.2  16 Sep 94  Ken Stevens
+  pei
+    Moved parsing of local commands after file redirection so that
+      people can do stuff like "alias >! my_aliases" and "games >! mygames".
+    Fixed alias recursion.  There was a bug which caused aliases like
+      alias info "info | more"
+      alias power "power new | more"
+      --to result in infinite loops when the user typed "info" or "power".
+      The bug has been fixed.
+  parse.pl
+    Added parsing of %wkfc to &parse_produce.
+  tools.pl
+    Made a new tool called "extra" which will tell you how many extra
+      civs you have in a sector.  For example, if you had:
+
+  sect  des eff wkfc will make- p.e. cost  use1 use2 use3  max1 max2 max3  max
+  6,2    i 100%  590   31 shell 0.31 $300  200l 100h       236l 118h      36
+  5,3    t 100%  590 4.43 tech  0.74 $1800   6d  30o  60l   22d 110o 220l 16.26
+
+      --then if you type "extra" in pei, you would get:
+You have  69 extra civs in 6,2.
+You have 330 extra civs in 5,3.
+
+1.2.2 -> 1.2.3  6 Oct 94   Ken Stevens & Sam Tetherow
+  tools.pl
+    Fixed a bug in "delta" which wiped out the enemy sector database.
+    Added <SECTS> argument to most tools, and changed the way that
+      <SECTS> argument is processed.
+    stat/sstat/pstat/lstat now allow arguments like ?own=Mirkwood.
+    Added "relations" command to startup stuff for above change.
+    Changed find_country_number to use "change country" to find the
+      country number (this is much much faster).
+    Completely rewrote tools_extra and called it tools_civs.
+    Changed &print_n_parse to include the >/dev/null redirection.
+    Put &print_n_parse in all places it could go.
+    Fixed a bug which caused problems when you were country #0.
+    Improved the stat algorithm to make it much faster (looping over
+      known sectors rather than all sectors in realm.)
+  parse.pl
+    Added parse_change (for &find_country_number).
+    Changed &parse_produce to &parse_product.
+    "march" and "nav" are now parsed by parse_look.
+    Fixed a bug in parse_produce which caused new guns not to appear
+      on the "delta" report.
+  pei
+    Improved the error message you get when a tool doesn't load.
+    Fixed a bug in &quotify which was removing ' symbols from the
+      middle of commands.
+  mail.pl
+    Fixed a bug in &getline which ate spaces at the beginning of lines.
+
+1.2.3 -> 1.2.4  12 Oct 94  Ken Stevens
+  tools.pl
+    Added three new tools:
+      reach       - Tells you the range of your forts, radar stations, and 
+                    coastwatch.
+      sreach <SHIPS>
+                  - Tells you the fire range of your ships, and how many
+                    sectors they can nav this update and next update.
+      lreach <UNITS>
+                  - Tells you the fire range of your land units, and how many
+                    100% (non-road non-mountain) sectors they can march this
+                    update and next update.
+    Changed the "civs" tool to include uw's and mil in sector workforce
+      and changed the name of the "civs" column to "workforce".
+    Fixed a bug in wdelta which gave empty deltas when there were
+      multiple dist centres (Sam made this fix).
+    Added "show ship stats" and "show land stats" to startup sequence
+      for the "sreach" and "lreach" tools.
+    Renamed &build_target &build_sect_target.
+  parse.pl
+    Added parse of "Technology factor" in &parse_nation for use in "reach".
+    Fixed a bug in &parse_land_stats.
+  mail.pl
+    You are now allowed to reply to telegrams ("BULLETINS") from the deity.
+  pei
+    Rewrote "help tools" to make things more clear.
+
+1.2.4 -> 1.3  22 Oct 94  Ken Stevens & Sam Tetherow & Drake Diedrich
+  RCS
+    pei is now being maintained using RCS.  An idea who's time had come.
+  tools.pl
+    Added three new tools:
+    jack <SECTS>  - Set iron thresholds in your "j" and "k" sectors to the
+                    value of "max1" in your production report.  After calling
+                    "jack", you can call "imvr" to move iron into the sectors
+                    that need it.
+    fus <SHIPS>   - Fuel ships in harbours and generate an error message if
+                    the harbour needs more fuel.
+    cmap <REALM>  - Like bmap, but prints a letter representing the owner of
+                    sectors not owned by you, so you can see who is where.
+    Added &init_letter, &toupper, &tolower for 'cmap' tool.
+    Modified xmvr to have a sects argument.  New syntax is:
+      xmvr <SECTS> <THRESH>.  Note that if you want to specify <THRESH>, you
+      must also specify <SECTS>.
+    Changed the 'civs' tools to show extra civs and uw's separately.
+    Fixed 'civs' tools to show civs needed in the case when a sector
+      is being redesignated.
+    The tools "sstat", "pstat", and "lstat" now print the country name
+      rather than the country number.
+    The tools "stat", "sstat", "pstat", and "lstat" will now generate
+      an error message if they are called incorrectly.
+    Fixed a division by zero bug in the "reach" tool (now it prints
+      "infinity" for the tech required for the highest ranges).
+    Fixed a minor bug in sneweff (actually in build_ships) which
+      showed commodities being used at sea.
+    Put #' all over the place to make it emacs friendly.
+    Removed the if (!$tools_loaded) bracketting the external tools.
+  pei
+    Added $, = ", " to &init so that when you print arrays in pei you
+      can read them.
+    "user" is now sent before "coun" in &connect to prevent an error
+      log at the server end.
+    Pei now reads 'sys/socket.ph' if it's available and uses it in the
+      call to socket (this is required by the Solaris operating system).
+    Created a new local command "reload" for reloading tools.pl and
+      parse.pl.  It is mainly for Sam and I who need to reload these files
+      on the fly as we work on them.  This is a "debugging" tool so I
+      won't add it to the pei docs.  
+  parse.pl
+    Fixed a bug in &parse_look, &parse_spy_plane, and &parse_attack
+      which wasn't remembering that you saw approx 0 mil in a sector.
+    Fixed a bug in &load_DB which wasn't loading both parts of the date.
+    Fixed a bug in &parse_nation which misparsed realms.
+    Added parse of tech decay rate to &parse_version.
+    Changed &parse_product to match lines from start to finish.
+    Added &parse_realm.
+  readline.pl
+    In SetTTY, replaced $TIOCSETP with $TIOCSETN to allow typeahead in pei.
+  hacker.man
+    Updated this file.
+
+1.3 -> 1.4     2 Nov 94   Ken Stevens & Kevin O'Connor
+  tools.pl
+    Added a new command:
+      crew <SHIPS>  - This command specifies exactly how many civs or mil your
+                      ships will need so that they won't decay when they are
+   	              out at sea.  (Note this might not be 100% accurate
+                      on all servers.)
+    Modified three commands:
+      fus <SHIPS>     - If the ship is at sea, and it is not completely
+                        fueled, then 'fus' will show the number of sectors
+                        (and updates) it will be able to sail before
+                        needing to refuel.  'fus' will also now list ships
+                        stranded at sea.
+      sneweff <SHIPS> - Added a new "total" line at the bottom which tells
+                        you the total amount of commodities consumed in
+                        the sector for building.  Any extra commodities in the
+                        sector (i.e. not being used for building) are preceded
+                        by a +.  this is helpful if you might need to use the
+                        commodities elsewhere.
+      lneweff <UNITS> - Changed in the same way as sneweff.
+    Fixed a bug in the 'jack' tool--it was only jacking thresholds in
+      'k' sectors (*blush*).
+    Fixed a bug in 'reach' tool which was neglecting to add 1 to fort range.
+    If &find_country_number is not able to find your country number,
+      then it will ask you for it (since "change c" won't work if you don't
+      have enough BTU's).
+  pei (These changes were made by Kevin O'Connor)
+    Pei now checks for environment variables EDITOR and PAGER and uses
+      them if it finds them.  $EDITOR and $PAGER may also be set in .peirc.
+    Fixed a bug in the interrupt handler which wouldn't let you out of pei
+      if you weren't able to flush server output because of lag.
+  mail.pl (These changes were made by Kevin O'Connor)
+    If the user puts "$mailflag = 1" in either .peirc or start.exec, then
+      when the player uses the "mail" and "wmail" commands, the teles and
+      annos will not be deleted on the server.  This is most useful for 
+      co-rulers.
+    To facilitate this, new headers are compared with old headers
+      when $mailflag is set, to avoid duplicate telegrams in the teles file.
+
+1.4  -> 1.4.1  7 Nov 94  Ken Stevens
+  pei
+    Fixed socket stuff so that pei will work on IRIX machines.  It
+      seems that IRIX machines require that you write to a socket before you
+      can read from it.
+    If you typed "pei badgamename" in unix, you got the cryptic error message
+      "Cannot assign requested address."  This has been changed to a
+      "Usage:"... error message.
+  tools.pl
+    Changed "stat" tools so that they specify the month name instead
+      of a number in the date column.
+  parse.pl
+    Added array %monthname for stat functions.
+    Fixed spelling of agribusiness (was screwing up "stat" tool).
+
+1.4.1 -> 1.5  12 Nov 94  Ken Stevens
+  pei
+    If pei gets a "Socket protocol not supported" error the first time
+      it runs, then it will modify itself to fix the problem and ask you to
+      run it again.  Hopefully this will solve any pei socket problems on
+      most machines. 
+  tools.pl
+    Changed the "rebel" command so that it now shows sectors which
+      have "too much" mil in them so that you can move mil around to prevent
+      rebellion.  "rebel" will now also show sector designation and mobility.
+    "lneweff" will now only check land units in '!' or 'f' sectors.
+
+1.5 -> 1.6  15 Dec 94  Ken Stevens
+  mail.pl
+    Fixed a bug in "anno" and "tele" tool which would delete a line of
+      your text from time to time.  The problem was that pei was forgetting
+      to count the \n when calculating the length of a line.
+  parse.pl
+    Changed split(/ / to split(/[ \n]+/ in &parse_dump.  Apparently
+      this only affected the parsing of rads.
+    There was an infinite loop in &parse_bulletin which was causing
+      pei to hang when parsing plane output when it didn't know the
+      country number for a country.  The loop now terminates.
+  pei
+    If you put "$debug=1" in ~/.peirc, then pei will display the login
+      conversation between pei and the server when it connects to a game.
+  tools.pl
+    The "setfood" tool will now not set food thresholds in warehouses.
+    find_country_number now sets $number{$country} to $coun.
+    In "pneweff" tool, added "total", "extra", and "needs".
+    Changed "fus" so that it now tells you when your ship is in an
+      ally's harbour and how far it can go from there before running
+      out of fuel.  Also fixed a bug which didn't notice petrol in the
+      sector (it was spelled "pet" when it should have been spelled "petrol".)
+    Changed "xmvr" so that you're now allowed to move commodities (not
+      civs and uw's) out from (but not into) a sector if you're not
+      the old owner of the sector.  For example, feeding civs from a
+      conquered warehouse. 
+    Changed $minmob (the minimum allowed mobility for a sector for
+      xmvr) for harbours from 10 to 40.  The reason is that you need
+      mobility in harbours when feeding your civs using fishing boats.
+1.6 -> 1.7  Ken Stevens, Jorg Schray, and Chris Farrell
+  mail.pl
+    Added new variable $mailflag{"gamename"} which does the same thing
+      as $mailflag (keeps the mail on the server when you use the "mail" 
+      tool), except you now have the possibility to set the mail flag
+      on some games but not others. (Jorg Schray)
+  pei
+    Ported pei to perl5.000.  Note that it still works under perl4.x.
+      (Jorg Schray)
+    Added a new local command "firewall" to allow players stuck behind
+      a firewall to use a proxy server to connect to an Empire server.
+      Type "help local" from within pei for more details. (Chris Farrell)
+    Documented that "a" in the "make" field of the "simu" tool refers
+      to how much avail will be produced in that sector.
+  readline.pl
+    Jorg Schray also needed to change readline.pl in a number of
+      places to get it to compile under perl5.000.
+1.7 -> 1.8  11 May 95 Ken Stevens,Drake Diedrich,Steven White, Jorg Schray
+  simu.pl
+    Got a new version of simu.pl from Drake which calculates avail better.
+    Applied a patch from Steven White which alligns the columns better.
+  parse.pl
+    Bugfix from Jorg Schray <schrayj@lvu.ph.lancs.ac.uk> in perl5, "undef"
+      only takes one arg.
+  readline.pl
+    Fixed reverse-search (patch from Drake).
+  tools.pl
+    Fixed a bug in sneweff which was giving the wrong info for ships
+      at sea (I think that I screwed up the last time I fixed this,
+      but now my present fix looks better...)
+    Now x,y will line up at the , in sneweff, lneweff, and pneweff.  Suggested
+      by Steven A White <sa2white@calum.csclub.uwaterloo.ca>.
+    Fixed a bug (reported by m_turner@cs.wisc.edu (Michael Turner)) which
+      was parsing "5 ships", "4 planes", ... at the bottom of "ship *"
+      parsing, and thus generating some erroneous reports.
+    Changed some multiple undef commands into single undef's for perl5.
