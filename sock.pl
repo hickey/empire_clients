@@ -41,7 +41,7 @@ $latest_handle = 'sock0000000001';
 sub open {
   local ($remote_host, $remote_port) = @_;
   if (!$remote_port) {
-    $! = "bad arguments to sock'open()";
+    $! = "bad arguments to sock::open()";
     return 0;
   }
   $sock = ++$latest_handle;
@@ -67,7 +67,7 @@ sub open {
 
   $handles{$sock} = 1;
   $oldfh = select($sock); $| = 1; select($oldfh);
-  return "sock'" . $sock;
+  return "sock::" . $sock;
 }
 
 sub close {
@@ -126,7 +126,7 @@ sub S_read {
   local ($handle, $endtime) = @_;
   local ($rmask, $nfound, $nread, $thisbuf, $buf);
 
-  $main'status &= ~($main'S_EOF | $main'S_TIMEOUT);
+  $main::status &= ~($main::S_EOF | $main::S_TIMEOUT);
 
   if ($TelnetBuffer{$handle} =~ m/\n/) {
     $TelnetBuffer{$handle} =~ s/^(.*\n)//;
@@ -147,13 +147,13 @@ sub S_read {
 	  last get_data if &_preprocess($handle);
 	}
 	else {
-	  $main'status |= $main'S_EOF;
+	  $main::status |= $main::S_EOF;
 	  $* = 0;
 	  return ''; # connection closed
 	}
       }
       else {
-	$main'status |= $main'S_TIMEOUT;
+	$main::status |= $main::S_TIMEOUT;
 	last get_data;
       }
     }
@@ -162,7 +162,7 @@ sub S_read {
       $TelnetBuffer{$handle} =~ s/^(.*\n)//;
       $buf = $1;
     } else {
-      $main'status |= $main'S_TIMEOUT;
+      $main::status |= $main::S_TIMEOUT;
     }
   }
   $buf;
