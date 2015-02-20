@@ -389,7 +389,7 @@ sub nova {
 		while (@added = &buildcost(\%cost,\%marked)) {
 			foreach $sect (@added) {
 				last explore if $main::status;
-				next if ($dump{$sect}{'mob'} <= 2*$cost{$sect});
+				next if ($dump{$sect}{'mob'} <= 2*$cost{$dest});
 				next if ($dump{$sect}{'oldown'} != $coun);
 				if ($dump{$sect}{"civ"} > 1) {
 					$comm = 'c';
@@ -1150,7 +1150,7 @@ sub build_planes {
 				$newplane{$plane}{'avail'}=0;
 				next;
 			}
-			if (!defined(%{$newship{$ship}})) {
+			if (%{$newship{$ship}}) {
 				print $main::S "sdump $ship\n";
 				$main::command="sdump";
 				while(&getline()) { 1; }
