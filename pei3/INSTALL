@@ -1,0 +1,8 @@
+You have to install the Empire.pm package to use pei3.
+
+Get it from CPAN or from
+http://empire.tau.ac.il/~romm/emp/
+
+See README.Empire.pm for more details.
+
+After that you can run pei3. See README for usage details.

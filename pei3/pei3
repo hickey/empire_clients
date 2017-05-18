@@ -1,0 +1,837 @@
+#!/usr/bin/perl
+
+require 5.006;
+
+use strict;
+use warnings;
+
+use Getopt::Std;
+use Term::ReadLine;
+use Term::ReadKey;
+use Term::Cap;
+
+use Empire qw($C_CMDOK $C_DATA $C_INIT $C_EXIT
+	      $C_FLUSH $C_NOECHO $C_PROMPT $C_ABORT
+	      $C_REDIR $C_PIPE $C_CMDERR $C_BADCMD
+	      $C_EXECUTE $C_FLASH $C_INFORM $C_SYNC);
+use Empire::PEIRC;
+
+our %commandlist = ('game'=>'pei3_game','connect'=>'pei3_connect','alias'=>'pei3_alias',var=>'pei3_var');
+our %helplist = (game=>"game host port coun pass gamedir\n\nDefine a new game\n",
+		 connect=>"connect host port coun pass\n\nConnect to a game\n",
+		 alias=>"alias aliasname aliasedcommand\n\nDefine a new alias. You can use \$1 etc. for\nvariable substitution\n'alias' without arguments lists currently defined aliases\n",
+		 var=>"var\n\n lists all defined variables\nYou may define a variable by issuing a command in format\nvar1=val1 at the prompt\n",
+		 help=>"You need help about help??\n",
+		 history=>"Displays the history of entered commands. You may also use ! prefix to\nreuse the commands:\n !! is the last command\n !\$ is the last argument of the last command\n !* is the last arguments list to the last command\n !^ is the last command without the arguments\n !num means history command number num\n",
+		 games=>"games\n\n list all the defined games\n",
+		 save=>"saves all current definitions to ~/.pei3rc\n",
+		 foreach=>'foreach l|s|u|p <SECT|SHIP|UNIT|PLANE> [ecommand]
+
+Perform the Empire command [ecommand] on <SECTS>
+where instances of the variables $sect, $civ,
+$mil, $uw, $food, $iron, $lcm, $hcm, $iron, $dust,
+$bar, $oil, $rad, $pet, $shell, and $gun in
+[ecommand] will be replaced by their values for
+each sector. $plane, $ship, $unit and $their_dump_field
+are also recognized. "l" stands for land sector
+in a way similar to deity "edit" command.
+e.g. foreach se #1 ?mil<5 move m 0,0 5-$mil $sect
+(Make sure that each sector in #1 has at least 5 mil
+in it--if it does not, move the necessary amount of mil
+from 0,0 into the sector.) When the command fails for
+a specific sector, the loop is discontinued.',
+		);
+our $VERSION = '3.01';
+print "Perl Empire Interface v$VERSION\n";
+
+our $game;
+our $inform = '';
+
+our $PEIRC = $ENV{HOME}.'/.pei3rc';
+our $redirect = 0;
+
+our %opts;
+
+our $gamename;
+our $host;
+our $port;
+our $coun;
+our $play;
+our $user = $ENV{USER};
+our $gdir = '.';
+our $simple = 1;
+
+our $localrc;
+
+our $preprompt = undef;
+our $prompt;
+our $newprompt;
+our $term = new Term::ReadLine 'pei3';
+our %alias;
+our %var;
+our %games;
+our %dumpfield;
+
+$| = 1;
+
+our $FH;
+
+my $terminal = Tgetent Term::Cap { OSPEED => 9600 };
+my $hilite = $terminal->Tputs('md',0,$FH);
+my $reset  = $terminal->Tputs('me',0,$FH);
+
+&getopts('hvu:f:d:n',\%opts);
+
+&version if ($opts{v});
+&usage if ($opts{h});
+$user = $opts{u} if ($opts{u});
+$PEIRC = $opts{f} if ($opts{f});
+$gdir = $opts{d} if ($opts{d});
+$simple = 0 if ($opts{s});
+$localrc = Empire::PEIRC->new($PEIRC);
+&localloop if $opts{n};
+my (@gameinfo) = &parse_command(@ARGV);
+if ($#gameinfo == 5) {
+    ($host,$port,$coun,$play,$gamename,$gdir) = @gameinfo;
+}
+print "Couldn't change directory to $gdir: $!\n" unless (chdir $gdir);
+if ($host && $port && $coun && $play && $user && $gamename && $gdir) {
+    &connect_game($host,$port,$coun,$play,$user,$gamename,$gdir);
+}
+else {
+    print "Falling back to local prompt\n";
+    &localloop;
+}
+sub version {
+
+    print "Based on Empire.pm module.\n";
+    print "Written by Roman M. Parparov <romm\@empire.cx>\n";
+    print "Previous versions by Ken Stevens, Sam Tetherow and Drake Diedrich\n";
+    print "Acknowledgements to Jorg Schray, Chris Farrell, Steven White and\nLaurent Fallot\n";
+    exit;
+}
+sub usage {
+
+    print "Usage:\n";
+    print "pei3 [-u user] [host port country player] [-d gamedir]| [game] | -s | -n | -v | -h\n";
+    print "Arguments: [host port country player] - supply game definitions\n\t in command line\n";
+    print "           [game] - game name as defined in ~/.pei3rc\n";
+    print "Options: -v - print the version and exit\n";
+    print "         -h - print this message\n";
+    print "         -u - user string\n";
+    print "         -s - simple mode, do not use any tools\n";
+    print "         -n - fall to local prompt immediately\n";
+    print "         -d - game data directory\n";
+    print "         -f - peirc file to use instead of default ~/.pei3rc\n";
+    exit;
+}
+sub parse_command {
+
+    my @arg = @_;
+    my $gamedir = $gdir;
+    if ($#arg == -1) {
+	if ($ENV{EMPIREHOST} && $ENV{EMPIREPORT} && $ENV{COUNTRY} && $ENV{PLAYER}) {
+	    print "Obtaining game parameters from the environment\n";
+	    $host = $ENV{EMPIREHOST};
+	    $port = $ENV{EMPIREPORT};
+	    $coun = $ENV{COUNTRY};
+	    $play = $ENV{PLAYER};
+	    $gamename = 'Empire';
+	    return($host,$port,$coun,$play,$gamename,$gamedir);
+	}
+	else {
+	    print "Enter the empire host:";
+	    $host = <STDIN>; chomp $host;
+	    unless ($host) {
+		return ();
+	    }
+	    print "Enter the empire port:";
+	    $port = <STDIN>; chomp $port;
+	    unless ($port) {
+		return ();
+	    }
+	    print "Enter the empire country:";
+	    $coun = <STDIN>; chomp $coun;
+	    unless ($coun) {
+		return ();
+	    }
+	    print "Enter the empire password:";
+	    $play = <STDIN>; chomp $play;
+	    unless ($play) {
+		return ();
+	    }
+	    print "Enter the empire game name:";
+	    $gamename = <STDIN>;
+	    unless ($gamename) {
+		$gamename = 'Empire';
+	    }
+	    return($host,$port,$coun,$play,$gamename,$gamedir);
+	}
+    }
+    elsif ($#ARGV == 0) {
+	$gamename = shift @ARGV;
+	if ($localrc->getGame($gamename)) {
+	    $host = $localrc->host($gamename);
+	    $port = $localrc->port($gamename);
+	    $coun = $localrc->coun($gamename);
+	    $play = $localrc->play($gamename);
+	    $gdir = $localrc->gamedir($gamename);
+	    return($host,$port,$coun,$play,$gamename,$gdir);
+	}
+	else {
+	    print "No game $gamename defined!\n";
+	    return();
+	}
+    }
+    elsif ($#ARGV == 3) {
+	$host = $ARGV[0];
+	$port = $ARGV[1];
+	$coun = $ARGV[2];
+	$play = $ARGV[3];
+	$gamename = 'Empire';
+	return ($host,$port,$coun,$play,$gamename,$gamedir);
+    }
+    else {
+	&usage;
+    }
+}
+sub connect_game {
+
+    my ($host,$port,$coun,$play,$user,$gamename,$gdir) = @_;
+
+    $game = Empire->new(-host=>$host,
+			-port=>$port,
+			-country=>$coun,
+			-player=>$play,
+			-full=>$simple,
+			-user=>$user,
+			-name=>$gamename);
+    select STDOUT;
+    my %empstatus = $game->empstatus();
+    if ($empstatus{EMPSTATUS} eq 'NOT CONNECTED' ||
+	$empstatus{EMPSTATUS} == $C_EXIT) {
+	print "Failed to connect! $empstatus{RESPONSE}\n";
+	print "Falling back to local prompt\n";
+	&localloop;
+    }
+    else {
+	print "Connected!\n";
+	print "        -=O=-\n";
+	if ($simple) {
+	    print "Reading version...\n";
+	    $game->set_version($game->version());
+	    print "Reading nation...\n";
+	    $game->set_nation($game->nation());
+	    print "Reading relation...\n";
+	    $game->set_relations($game->relations(),$game->nnum());
+	}
+	&gameloop;
+	&localloop;
+    }
+}
+sub event_hook {
+
+    my $rin;
+    my $rout;
+    my $update_display;
+
+    $rin='';
+    vec($rin,fileno(STDIN),1) = 1;
+    if ($game->{SOCKET}) {
+        vec($rin,fileno($game->{SOCKET}),1) = 1;
+    }
+    select($rout=$rin,undef,undef,undef);
+    if ($game->{SOCKET} && vec($rout,fileno($game->{SOCKET}),1) == 1) {
+	print "\n";
+        my ($status,$data) = &parse_server('void');
+	if ($status eq $C_EXIT) {
+	    print "Connection shut down by server side!\n";
+	    &localloop();
+	    return();
+	}
+	print $inform if $inform;
+        $term->forced_update_display unless $status eq $C_EXIT;
+    }
+}
+sub parse_server {
+
+    my ($proto,$output,$time,$btu);
+    my $cmd = shift;
+    my %empstatus;
+    my ($status,$data) = $game->empreadline($cmd);
+
+    if ($data =~ /[\x7F-\xFF]/m) {
+	$data =~ s/([\x7F-\xFF])/$hilite.chr(ord($1) & 0x7f).$reset/meg;
+    }
+    print $data;
+    if ($status eq $C_PROMPT || $status eq $C_FLUSH) {
+	select STDOUT;
+	close SHLL;
+	$redirect = 0;
+    }
+    elsif ($status eq $C_EXIT) {
+	select STDOUT;
+	$| = 1;
+	print "\nClosing connection for $gamename...";
+	print "Click!\n";
+	$redirect = 0;
+	$| = 0;
+	$game->disconnect();
+    }
+    if ($game->hasflash()) {
+	select STDOUT;
+	print "\n".$game->hasflash()."\n";
+	$game->clearflash();
+	if ($redirect == 1) {
+	    select SHLL;
+	}
+    }
+    if ($game->hasinform()) {
+	select STDOUT;
+	print "\a";
+	$inform = $game->hasinform();
+	$prompt = &peiprompt($game->name(),$game->country(),$game->minutes(),$game->btu());
+        $game->clearinform();
+	if ($redirect == 1) {
+	    select SHLL;
+	}
+    }
+    return $status;
+}
+sub localloop {
+
+    while (1) {
+	print "\n";
+	my $localcommand;
+	$localcommand = $term->readline('pei3% ');
+	chomp $localcommand;
+	next unless $localcommand =~ /\S/;
+	my($newline,$echo,@command) = &expand_command($localcommand);
+	print $newline if $echo;
+	chomp $newline;
+	if ($localrc->getGame($newline)) {
+	    $gamename = $newline;
+	    $host = $localrc->host($gamename);
+	    $port = $localrc->port($gamename);
+	    $coun = $localrc->coun($gamename);
+	    $play = $localrc->play($gamename);
+	    $gdir = $localrc->gamedir($gamename);
+	    print "Couldn't change directory to $gdir: $!\n" unless chdir $gdir;
+	    &connect_game($host,$port,$coun,$play,$user,$gamename);
+	    next;
+	}
+	my $command;
+	my $args;
+	if ($newline =~ /^\s*(\S+)\s+(.*)$/) {
+	    $command = $1;
+	    $args = $2;
+	}
+	else {
+	    ($command) = ($newline =~ /^\s*(\S+)/);
+	    $args = '';
+	}
+	if ($command eq 'alias') {
+	    $localrc->alias($args);
+	}
+	elsif ($command eq 'var') {
+	    $localrc->var();
+	}
+	elsif ($command eq 'save') {
+	    $localrc->writePEIrc();
+	}
+	elsif ($command eq 'games') {
+	    $localrc->showGames($args);
+	}
+	elsif ($command eq 'game') {
+	    $localrc->addGame($args);
+	}
+	elsif ($command eq 'history') {
+	    &pei3_history();
+	}
+	elsif ($command eq 'help') {
+	    shift @command;
+	    &help(shift @command);
+	}
+	else {
+	    eval ($newline);
+	    print "Unknown local command $command and not connected to a game!\n" if $@;
+	}
+    }
+}
+sub gameloop {
+
+    my $line;
+    my $command;
+    my $redirector;
+    my $target;
+    my %empstatus;
+
+    $term->Attribs->{event_hook} = \&event_hook;
+    while (1) {
+	if (!defined $game || (!defined $game->{SOCKET})) {
+	    return;
+	}
+	else {
+	    %empstatus = $game->empstatus();
+	    if ($empstatus{EMPSTATUS} eq $C_FLUSH) {
+		$prompt = $game->subprompt();
+	    }
+	    elsif ($empstatus{EMPSTATUS} eq $C_PROMPT) {
+		$prompt = &peiprompt($game->name(),$game->country(),$game->minutes(),$game->btu());
+		print "\n";
+	    }
+	    elsif ($empstatus{EMPSTATUS} eq $C_EXIT) {
+		return();
+	    }
+	    my $hasanno = $game->hasanno();
+	    if ($hasanno) {
+		print $hasanno . "\n";
+		$game->clearanno();
+	    }
+	    my $hastele = $game->hastele();
+	    if ($hastele) {
+		print $hastele . "\n";
+		$game->cleartele();
+	    }
+	    $| = 0;
+	    $| = 1;
+	    $line = $term->readline($prompt);
+	    $line =~ s/^\s+//;
+	    $line =~ s/\s+$//;
+	    if ($line !~ /\S/) {
+		if ($empstatus{EMPSTATUS} eq $C_FLUSH) {
+		    if($empstatus{RESPONSE} =~ /^\</) {
+			$line = 'h';
+		    }
+		}
+		else {
+		    next;
+		}
+	    }
+	    if ($empstatus{EMPSTATUS} eq $C_FLUSH and $line =~ /\S/) {
+		my (@hist) = $term->GetHistory();
+		$term->remove_history($#hist);
+	    }
+	    if ($line !~ /\S/) {
+		$game->empcmd("\n");
+	        my $status = &parse_server("\n");
+		next;
+	    }
+	    if (($line !~ /\s\?\S+\>\S+/) &&
+		(($command,$redirector,$target) = ($line =~ /(\S.*?)(\||\>)(.*)/))) {
+		if ($redirector eq '>') {
+		    if ($target =~ /^\>/) {
+			$redirector = '>>';
+			$target = substr($target,1);
+		    }
+		}
+		$target =~ s/^\s+//;
+		$command =~ s/\s+$//;
+		next unless open(SHLL,"$redirector$target");
+		select SHLL;
+		$redirect = 1;
+		$line = $command;
+	    }
+	    my($newline,$echo,@command) = &expand_command($line,$empstatus{EMPSTATUS});
+	    shift @command;
+	    my ($command,$args) = ($newline =~ /\s*(\S+)\s+(.*)$/);
+	    if ($echo == 1) {
+		print $newline;
+	    }
+	    if ($command eq 'alias') {
+		$localrc->alias($args);
+	    }
+	    elsif ($command eq 'var') {
+		$localrc->var();
+	    }
+	    elsif ($command eq 'save') {
+		$localrc->writePEIrc();
+	    }
+	    elsif ($command eq 'games') {
+		$localrc->showGames($args);
+	    }
+	    elsif ($command eq 'game') {
+		$localrc->addGame($args);
+	    }
+	    elsif ($command eq 'history') {
+		&pei3_history();
+	    }
+	    elsif ($command eq 'help') {
+		&help(shift @command);
+	    }
+	    elsif ($command eq 'foreach') {
+		&run_foreach(@command);
+	    }
+	    else {
+		if ($command =~ /^rea/) {
+		    $game->clearinform();
+		    $inform = '';
+		}
+		$game->empcmd($newline);
+	        my $status = &parse_server($newline);
+	    }
+	}
+    }
+}
+sub expand_command {
+
+    my $command = shift;
+    my $status = shift;
+    my $expanded_command;
+    my (@command) = split(/\s+/,$command);
+    my $newline = '';
+    my $histline;
+    my $echo = 0;
+    my $ci = 0;
+    my @ncommand;
+
+    unless ($status && $status eq $C_FLUSH) {
+	for my $arg (@command) {
+	    if ($arg =~ /^\!(.*)/) {
+		$histline = &pei3_history_call($1);
+		$echo = 1;
+	    }
+	    else {
+		$histline = $arg;
+	    }
+	    my @hcommand = split(/\s+/,$histline);
+	    for my $harg (@hcommand) {
+		$ncommand[$ci] = $harg;
+		$ci++;
+	    }
+	}
+	@command = @ncommand;
+    }
+    if ((!$status || $status ne $C_FLUSH) &&
+	$localrc->getAlias($command[0])) {
+	$echo = 1;
+	$newline = $localrc->expandAlias(@command);
+    }
+    else {
+	$newline = join ' ',@command;
+    }
+    $newline .= "\n";
+
+    return ($newline,$echo,@command);
+}
+sub peiprompt {
+
+    my $name = shift;
+    my $country = shift;
+    my $ptime = shift;
+    my $btu = shift;
+
+    $| = 1;
+    return $inform . $name .':'. $country .'['. $ptime .'/'. $btu .']% ';
+}
+sub pei3_game {
+
+    my $arg = shift;
+    my (@arg) = split(/\s+/,$arg);
+    if ($#arg != 4 && $#arg != 0) {
+	print "Usage: game gamename host port country player gamedir\n";
+    }
+    elsif ($#arg == 0) {
+	if ($localrc->getGame($arg[0])) {
+	    print join ' ',('game',$arg[0],$localrc->host($arg[0]),$localrc->port($arg[0]),
+			    $localrc->coun($arg[0]),$localrc->play($arg[0]),
+			    $localrc->gamedir($arg[0]));
+	}
+	else {
+	    print "Game $arg[0] is not defined\n";
+	}
+    }
+    elsif ($#arg == 4) {
+	$localrc->setGame(-name=>$arg[0],
+			  -host=>$arg[1],
+			  -port=>$arg[2],
+			  -coun=>$arg[3],
+			  -play=>$arg[4],
+			  -gamedir=>$arg[5]);
+	print "Game $arg[0] set\n";
+    }
+}
+sub pei3_connect {
+
+    my $arg = shift;
+    my (@arg) = split(/\s+/,$arg);
+
+    if ($#arg == -1) {
+	if ($localrc->getVar('host') && $localrc->getVar('port') &&
+	    $localrc->getVar('coun') && $localrc->getVar('play')) {
+	    $host = $localrc->getVar('host');
+	    $port = $localrc->getVar('port');
+	    $coun = $localrc->getVar('coun');
+	    $play = $localrc->getVar('play');
+	    $gdir = $localrc->getVar('gdir');
+	    $gamename = 'Empire';
+	    print "Couldn't change directory to $gdir: $!\n" unless chdir $gdir;
+	    &connectgame($host,$port,$coun,$play,$user,$gamename);
+	}
+	elsif ($ENV{EMPIREHOST} && $ENV{EMPIREPORT} && $ENV{COUNTRY} && $ENV{PLAYER}) {
+	    print "Obtaining game parameters from the environment\n";
+	    $host = $ENV{EMPIREHOST};
+	    $port = $ENV{EMPIREPORT};
+	    $coun = $ENV{COUNTRY};
+	    $play = $ENV{PLAYER};
+	    $gamename = 'Empire';
+	    &connectgame($host,$port,$coun,$play,$user,$gamename);
+	}
+	else {
+	    print "default game is undefined.\n";
+	}
+    }
+    elsif ($#arg == 0) {
+	if ($localrc->getGame($arg[0])) {
+	    $gamename = $arg;
+	    $host = $localrc->host($gamename);
+	    $port = $localrc->port($gamename);
+	    $coun = $localrc->coun($gamename);
+	    $play = $localrc->play($gamename);
+	    $gdir = $localrc->gamedir($gamename);
+	    print "Couldn't change directory to $gdir: $!\n" unless chdir $gdir;
+	    &connectgame($host,$port,$coun,$play,$user,$gamename);
+	}
+	else {
+	    print "Game $arg[0] is undefined.\n";
+	}
+    }
+    elsif ($#arg == 3) {
+	($host,$port,$coun,$play) = @arg;
+	$gamename = 'Empire';
+	&connectgame($host,$port,$coun,$play,$user,$gamename);
+    }
+    else {
+	print "Usage: connect [gamename | host port coun play]\n";
+    }
+}
+sub pei3_history {
+
+    my (@history) = $term->GetHistory();
+    $term->remove_history($#history);
+    my $i = 0;
+    pop @history;
+    print "History of commands:\n";
+    print "--------------------\n";
+    for my $h (@history) {
+	$i++;
+	print "$i: $h\n";
+    }
+    return;
+}
+sub pei3_history_call {
+
+    my ($histarg) = shift;
+    my (@history) = $term->GetHistory();
+    $term->remove_history($#history);
+    pop @history;
+    my ($histcom,$arg);
+    my $found = 0;
+    if ($histarg =~ /\s/) {
+	($histcom,$arg) = ($histarg =~ /^(\S+)+\s+(.*)/);
+    }
+    else {
+	$histcom = $histarg;
+    }
+    my $histline;
+
+    if ($histcom eq '!') {
+	$histline = pop(@history);
+    }
+    elsif ($histcom eq '$') {
+	my $lasthist = pop(@history);
+	if ($lasthist =~ /\s/) {
+	    my @arg = split(/\s+/,$lasthist);
+	    $histline = pop @arg;
+	}
+	else {
+	    $histline = $lasthist;
+	}
+    }
+    elsif ($histcom eq '*') {
+	my $lasthist = pop(@history);
+	if ($lasthist =~ /\s/) {
+	    my @arg = split(/\s+/,$lasthist);
+	    shift @arg;
+	    $histline = join ' ',@arg;
+	}
+	else {
+	    $histline = $lasthist;
+	}
+    }
+    elsif ($histcom eq '^') {
+	my $lasthist = pop(@history);
+	if ($lasthist =~ /\s/) {
+	    my @arg = split(/\s+/,$lasthist);
+	    $histline = shift @arg;
+	}
+	else {
+	    $histline = $lasthist;
+	}
+    }
+    elsif ($histcom =~ /^\d+$/) {
+	$histline = $history[$histcom-1];
+    }
+    else {
+	for my $h (reverse @history) {
+	    if ($h =~ /^$histcom/) {
+		$found = 1;
+		$histline = $h;
+		last;
+	    }
+	}
+	if ($found == 0) {
+	    $histline = '!'.$histcom;
+	}
+    }
+    if ($arg) {
+	$histline .= " $arg";
+    }
+    return $histline;
+}
+sub run_foreach {
+
+    my (@arg) = @_;
+
+    if ($arg[2] && $arg[2] =~ /^\?/) {
+	$arg[1] .= " $arg[2]";
+	splice(@arg,2,1);
+    }
+    unless ($#arg >=2) {
+	&help('foreach');
+	return;
+    }
+    my $item = shift @arg;
+    my $selection = shift @arg;
+    my $ecommand = join ' ',@arg;
+
+    if ($item eq 'se') {
+	no strict;
+	print "Running foreach on sectors $selection with command $ecommand\n";
+	my @sect = $game->set_dump($game->dump($selection));
+	foreach my $sector (@sect) {
+	    my $cmd = '';
+	    my @carg = @arg;
+	    foreach my $carg (@carg) {
+		while ($carg =~ /\$([a-z]+)/g) {
+		    ${$1} = $sector->$1();
+		}
+		$carg = eval($carg) if $carg =~ /\$/;
+		$cmd .= "$carg ";
+	    }
+	    print "$cmd\n";
+	    $game->empcmd($cmd);
+	    my $status = &parse_server($cmd);
+	    if ($status eq $C_FLUSH) {
+		print "Internal subprompt encountered, aborting!\n";
+		$game->empcmd('h');
+		my $status = &parse_server($cmd);
+		use strict;
+		return;
+	    }
+	}
+	use strict;
+    }
+    elsif ($item eq 's') {
+	no strict;
+	print "Running foreach on ships $selection with command $ecommand\n";
+	my @ship = $game->set_sdump($game->sdump($selection));
+	foreach my $thisship (@ship) {
+	    my $cmd = '';
+	    my @carg = @arg;
+	    foreach my $carg (@carg) {
+		while ($carg =~ /\$([a-z]+)/g) {
+		    ${$1} = $thisship->$1();
+		}
+		$carg = eval($carg) if $carg =~ /\$/;
+		$cmd .= "$carg ";
+	    }
+	    print "$cmd\n";
+	    $game->empcmd($cmd);
+	    my $status = &parse_server($cmd);
+	    if ($status eq $C_FLUSH) {
+		print "Internal subprompt encountered, aborting!\n";
+		$game->empcmd('h');
+		my $status = &parse_server($cmd);
+		use strict;
+		return;
+	    }
+	}
+	use strict;
+    }
+    elsif ($item eq 'p') {
+	no strict;
+	print "Running foreach on planes $selection with command $ecommand\n";
+	my @plane = $game->set_pdump($game->pdump($selection));
+	foreach my $thisplane (@plane) {
+	    my $cmd = '';
+	    my @carg = @arg;
+	    foreach my $carg (@carg) {
+		while ($carg =~ /\$([a-z]+)/g) {
+		    ${$1} = $thisplane->$1();
+		}
+		$carg = eval($carg) if $carg =~ /\$/;
+		$cmd .= "$carg ";
+	    }
+	    print "$cmd\n";
+	    $game->empcmd($cmd);
+	    my $status = &parse_server($cmd);
+	    if ($status eq $C_FLUSH) {
+		print "Internal subprompt encountered, aborting!\n";
+		$game->empcmd('h');
+		my $status = &parse_server($cmd);
+		use strict;
+		return;
+	    }
+	}
+	use strict;
+    }
+    elsif ($item eq 'l') {
+	no strict;
+	print "Running foreach on units $selection with command $ecommand\n";
+	my @unit = $game->set_ldump($game->ldump($selection));
+	foreach my $thisunit (@unit) {
+	    my $cmd = '';
+	    my @carg = @arg;
+	    foreach my $carg (@carg) {
+		while ($carg =~ /\$([a-z]+)/g) {
+		    ${$1} = $thisunit->$1();
+		}
+		$carg = eval($carg) if $carg =~ /\$/;
+		$cmd .= "$carg ";
+	    }
+	    print "$cmd\n";
+	    $game->empcmd($cmd);
+	    my $status = &parse_server($cmd);
+	    if ($status eq $C_FLUSH) {
+		print "Internal subprompt encountered, aborting!\n";
+		$game->empcmd('h');
+		my $status = &parse_server($cmd);
+		use strict;
+		return;
+	    }
+	}
+	use strict;
+    }
+    else {
+	print "Unknown foreach item.\n";
+    }
+}
+sub help {
+
+    my $topic = shift;
+
+    if (defined $topic) {
+	if (defined $helplist{$topic}) {
+	    print $helplist{$topic};
+	}
+	else {
+	    print "No such local command\n";
+	}
+    }
+    else {
+	print "Help is available on the following commands:\n";
+	print join "\n",sort keys %helplist;
+	print "\n";
+    }
+}

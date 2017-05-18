@@ -1,0 +1,22 @@
+pei3 - the newly rewritten Perl Empire Interface.
+Written by (C) Roman M. Parparov <romm@empire.tau.ac.il>
+
+Perl Empire Interface v3.0.0
+Usage:
+pei3 [-u user] [host port country player] [-d gamedir]| [game] | -n | -v | -h
+Arguments: [host port country player] - supply game definitions
+	 in command line
+           [game] - game name as defined in ~/.pei3rc
+Options: -v - print the version and exit
+         -h - print this message
+         -u - user string
+         -n - fall to local prompt immediately
+         -d - game data directory
+         -f - peirc file to use instead of default ~/.pei3rc
+
+This new version of pei revolutionarily combines readline and async
+server output (something Ken was unable to do). Other than that
+it is a rudimentary rewrite. It is based on Empire.pm framework.
+See INSTALL file about Empire.pm package.
+
+See 'help' command at pei command prompt about its usage.

@@ -1,0 +1,12 @@
+After version 3.00:
+Major notes:
+* Rewrite pei2.9 set of tools:
+	o nova
+	o delta
+	o mail
+	o signal handler (?)
+	o update simulation
+	o others that would be found useful
+* Provide a GUI frontend (TK or QT?)
+* Write new tools
+
