@@ -1,78 +1,8 @@
-		Welcome to pei - Perl Empire Interface
+You have to install the Empire.pm package to use pei3.
 
-  The pei manual is rather long, and if you're like me, you'll just
-want to take pei out of the box, plug it in, and see what it does.
-Here's how you can do just that:
+Get it from CPAN or from
+http://empire.tau.ac.il/~romm/emp/
 
-Type "make" in the pei directory.  This will make the program "highlight".
+See README.Empire.pm for more details.
 
-If you already use eif:
-  Type "pei" at your unix prompt.
-  pei will then convert your ~/.eifrc into ~/.peirc, and you will be
-  faced with the familiar "Local%" prompt.  To connect to a game, type
-  the game name.  (Note: pei does not have a "connect" command.)
-
-If you have never used eif:
-  The quickest way for you to start is to type something like
-    pei mycountryname mypassword game.host.name 1617
-  at the unix prompt, or to change the four lines at the top of the
-  file called "pei".  However, you are STRONGLY ENCOURAGED to do the following:
-    1. Copy the file called "example.peirc" to ~/.peirc.
-    2. Remove the aliases in this file that you don't like.
-    3. Edit the game stuff at the bottom, specifying the host, port, etc
-       of the games that you want to connect to.  
-  PEI should work without ~/.peirc, however I have heard that it doesn't
-  always work quite right, so use ~/.peirc to be safe.  (Note that
-  you'll only be able to access multiple games if $country is NOT
-  defined at the top of pei.)
-
-Now for the magic:
-  After you break, type "nova" and watch pei explore the entire island
-for you.  Once you've got ships, assault an island with about 30 mil,
-and then next update type "nova" again and pei will explore that
-entire island too.  Make sure that your #0 realm is big enough,
-because nova won't explore off the edge of a map.
-
-  Once you've got lots of civs, and maybe you've bridged to a
-neighbouring island, use "cmvr" to migrate your civs to the "New
-World".  If you don't have alot of civs, but you want to spread them
-out, then you can type something like "cmvr 50", and pei will try to
-get 50 civs into each sector.
-
-  If there is food in your game, type "setfood" and then "fmvr" to
-get the right amount of food to all your sectors.
-
-pei has lots of other neat features, but I'll let you read about
-them in tools.man and pei.man.
-
-These are the files included in this distribution:
-  README        Things that users of older versions of pei will need
-                to know about this latest version.
-  INSTALL       Installation instructions.
-  BUGS          A list of known bugs in pei.
-  CHANGES.1     Version revision history for pei 1.x.
-  CHANGES.2     Version revision history for pei 2.x.
-  WISH_LIST     Changes that we hope to implement in the future.
-  pei           The program you run.
-  local.pl      Contains all the pei local commands.
-  parse.pl      Parses server output into internal database.
-  tools.pl      Contains tools (nova, cmvr, ...).
-  mail.pl       Contains mail, wmail, tele, and anno tools.
-  simu.pl       Contains the "simu" tool.
-  sock.pl       Contains all socket I/O routines.
-  example.peirc Stuff for you to put in your ~/.peirc file (NOTE: don't
-                make a ~/.peirc file until pei has had a chance to
-                convert your ~/.eifrc into ~/.peirc).
-  help.pei      Pei users manual--you can also get this by typing "help pei"
-                from within pei.
-  help.local    Manual for pei commands that you can use at the local prompt.
-  help.tools    Manual for pei tools--you can also get this by typing
-                "help tools" from within pei.
-  highlight.c   A program to pipe the output of "sect" to.
-  Makefile      For making highlight.
-  README.hacker Information useful to hackers.
-
-ENJOY!
-
-Sam Tetherow
-tetherow@nol.org
+After that you can run pei3. See README for usage details.

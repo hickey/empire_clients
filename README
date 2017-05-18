@@ -1,17 +1,22 @@
-		Welcome to pei - Perl Empire Interface
+pei3 - the newly rewritten Perl Empire Interface.
+Written by (C) Roman M. Parparov <romm@empire.tau.ac.il>
 
-                *** THIS IS A BETA RELEASE ***
-                ***  USE AT YOUR OWN RISK  ***
+Perl Empire Interface v3.0.0
+Usage:
+pei3 [-u user] [host port country player] [-d gamedir]| [game] | -n | -v | -h
+Arguments: [host port country player] - supply game definitions
+	 in command line
+           [game] - game name as defined in ~/.pei3rc
+Options: -v - print the version and exit
+         -h - print this message
+         -u - user string
+         -n - fall to local prompt immediately
+         -d - game data directory
+         -f - peirc file to use instead of default ~/.pei3rc
 
-If you have never used pei before, then you should find out how to
-install pei and run it by reading the file called "INSTALL".
+This new version of pei revolutionarily combines readline and async
+server output (something Ken was unable to do). Other than that
+it is a rudimentary rewrite. It is based on Empire.pm framework.
+See INSTALL file about Empire.pm package.
 
-The major changes in the upgrade from 2.8 to 2.9 are:
-* pei now requires perl 5 (check your perl version with perl -v)
-
-* pei is now fully compliant with the 'wolfpack' code.  Which of course
-  broke all compliance with previous server versions.  It appears that noone
-  is running pre-wolfpack games though.
-
-You can get the lastest information and version of PEI from the PEI homepage
-at http://www.nol.org/home/tetherow/pei
+See 'help' command at pei command prompt about its usage.

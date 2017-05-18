@@ -1,0 +1,18 @@
+Changes
+lib/Empire.pm
+lib/Empire/Commands.pm
+lib/Empire/EConfig.pm
+lib/Empire/Unit.pm
+lib/Empire/Nation.pm
+lib/Empire/PEIRC.pm
+lib/Empire/Plane.pm
+lib/Empire/ProductType.pm
+lib/Empire/Sector.pm
+lib/Empire/SectorType.pm
+lib/Empire/Ship.pm
+Makefile.PL
+MANIFEST
+META.yml			Module meta-data (added by MakeMaker)
+README
+t/Empire.t
+TODO
