@@ -952,7 +952,7 @@ sub set_game {
   $dir = eval(''.&quotify($dir));
   $dir =~ s/~/$ENV{'HOME'}/g;
   if (!chdir($dir)) {
-    print STDERR "Cannot change directory to: \"".eval(''.&quotify(@_[4]))."\"\n";
+    print STDERR "Cannot change directory to: \"".eval(''.&quotify($dir))."\"\n";
   }
 
   $status |= $S_NEW_GAME unless $no_new_status;
